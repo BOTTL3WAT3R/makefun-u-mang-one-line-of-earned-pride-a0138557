@@ -1,39 +1,39 @@
 #!/usr/bin/env python3
-"""Entry program for make.fun's "One Line of Earned Pride" bounty.
+"""One Line of Earned Pride -- entry program for a make.fun bounty.
 
-Writes one line -- a quiet, earned moment of pride for someone in a
-scene, 1 to 240 characters -- to /output/entry.txt.
-Python standard library only.
+The whole entry is a single line of text: a quiet, earned moment of
+pride for someone in a scene. Running this program places that line
+in /output/entry.txt, where the bounty's gate and judge read it.
+Nothing beyond the Python standard library is used.
 """
-from pathlib import Path
 
-ENTRY = (
-    "Six winters Marta mended nets beside her father and never once "
-    "signed her work; this morning the harbourmaster walked past "
-    "every bench on the dock and asked for her knots by name."
-)
+import os
+import sys
+
+LINE = "Six winters Marta mended nets beside her father and never once signed her work; this morning the harbourmaster walked past every bench on the dock and asked for her knots by name."
 
 
-def write_entry() -> Path:
-    text = ENTRY + "\n"
+def emit(path):
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write(LINE + "\n")
+    return path
+
+
+def run():
+    # The gate accepts UTF-8 text of 1 to 240 characters; refuse to
+    # write anything outside it rather than ship an invalid entry.
+    if not 1 <= len(LINE) <= 240 or not LINE.strip():
+        raise ValueError("entry line outside the gate: %d chars" % len(LINE))
     try:
-        out_dir = Path("/output")
-        out_dir.mkdir(parents=True, exist_ok=True)
-        target = out_dir / "entry.txt"
-        target.write_text(text, encoding="utf-8")
-        return target
+        os.makedirs("/output", exist_ok=True)
+        return emit("/output/entry.txt")
     except OSError:
-        target = Path(__file__).resolve().parent / "output" / "entry.txt"
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(text, encoding="utf-8")
-        return target
-
-
-def main() -> None:
-    target = write_entry()
-    written = target.read_text(encoding="utf-8")
-    print(f"wrote {target} ({len(written.rstrip())} chars): {written}", end="")
+        here = os.path.dirname(os.path.abspath(__file__))
+        folder = os.path.join(here, "output")
+        os.makedirs(folder, exist_ok=True)
+        return emit(os.path.join(folder, "entry.txt"))
 
 
 if __name__ == "__main__":
-    main()
+    written = run()
+    sys.stdout.write("entry written to %s (%d chars)\n" % (written, len(LINE)))
